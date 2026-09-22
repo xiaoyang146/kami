@@ -55,14 +55,14 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$validateKami$0(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "卡密不能为空", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "卡密不能为空");
         if (autoLogin) {
             showInputDialog(activity);
         }
     }
 
     static /* synthetic */ void lambda$validateKami$1(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "设备ID获取失败，请重启应用", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "设备ID获取失败，请重启应用");
         if (autoLogin) {
             showInputDialog(activity);
         }
@@ -95,7 +95,7 @@ public class CardKeyManager {
         }
 
         static /* synthetic */ void lambda$onFailure$0(Activity activity, IOException e, boolean autoLogin) {
-            Toast.makeText(activity, "网络错误：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            DialogUtils.showValidationFeedback(activity, "网络错误：" + e.getMessage());
             if (autoLogin) {
                 CardKeyManager.showInputDialog(activity);
             }
@@ -121,7 +121,7 @@ public class CardKeyManager {
         }
 
         static /* synthetic */ void lambda$onResponse$1(Activity activity, Response response, boolean autoLogin) {
-            Toast.makeText(activity, "HTTP错误：" + response.code(), Toast.LENGTH_SHORT).show();
+            DialogUtils.showValidationFeedback(activity, "HTTP错误：" + response.code());
             if (autoLogin) {
                 CardKeyManager.showInputDialog(activity);
             }
@@ -174,22 +174,29 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$handleResponse$2(Activity activity, String message, boolean autoLogin) {
-        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
-        if (autoLogin) {
-            saveKami(activity, HttpUrl.FRAGMENT_ENCODE_SET);
-            showInputDialog(activity);
-        }
+        showError(activity, message, autoLogin);
     }
 
     static /* synthetic */ void lambda$handleResponse$3(String errorMsg, Activity activity, boolean autoLogin) {
+        String msg;
         if (errorMsg != null && (errorMsg.contains("设备ID不匹配") || errorMsg.contains("已绑定其他设备"))) {
-            Toast.makeText(activity, "设备id已绑定,请先解绑", Toast.LENGTH_LONG).show();
+            msg = "设备id已绑定,请先解绑";
         } else {
-            Toast.makeText(activity, "卡密无效或已到期", Toast.LENGTH_SHORT).show();
+            msg = "卡密无效或已到期";
         }
+        showError(activity, msg, autoLogin);
+    }
+
+    /** 统一错误提示：弹窗开着就显示在「立即验证」按钮下方，否则用 Toast */
+    private static void showError(Activity activity, String message, boolean autoLogin) {
         if (autoLogin) {
+            // 静默登录失败：弹窗还没打开，先暂存消息，弹窗建好后会自动显示在按钮下方
+            DialogUtils.showValidationFeedback(activity, message);
             saveKami(activity, HttpUrl.FRAGMENT_ENCODE_SET);
             showInputDialog(activity);
+        } else {
+            // 用户在弹窗里手动验证：直接显示在按钮下方
+            DialogUtils.showValidationFeedback(activity, message);
         }
     }
 
@@ -217,7 +224,7 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$handleResponse$6(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "服务端响应格式错误", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "服务端响应格式错误");
         if (autoLogin) {
             showInputDialog(activity);
         }
@@ -309,7 +316,8 @@ public class CardKeyManager {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+                // 显示在「立即验证」按钮下方的空白处
+                DialogUtils.showValidationFeedback(activity, message);
                 showInputDialog(activity);
             }
         });

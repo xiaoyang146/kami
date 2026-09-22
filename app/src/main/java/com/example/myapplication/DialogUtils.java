@@ -42,6 +42,8 @@ public class DialogUtils {
     public static AlertDialog dialog;
     private static TextView feedbackView;
     private static View statusDot;
+    /** 待显示到「立即验证」按钮下方空白处的提示（弹窗重建后自动填充） */
+    private static String pendingFeedback = null;
 
     public static void showNoticeDialog(Activity activity, NoticeManager.Notice notice, final Runnable runnable) {
         LinearLayout linearLayout = new LinearLayout(activity);
@@ -287,6 +289,8 @@ public class DialogUtils {
             window.setAttributes(attributes);
         }
         dialog.show();
+        // 弹窗建好后，把之前失败的提示填到「立即验证」按钮下方
+        applyPendingFeedback();
     }
 
     private static LinearLayout buildFooterLink(Activity activity, String str, String str2, View.OnClickListener onClickListener) {
@@ -320,18 +324,26 @@ public class DialogUtils {
         if (str == null || str.trim().isEmpty()) {
             str = "验证失败";
         }
+        // 弹窗未显示时先暂存，等弹窗创建好之后自动填充到按钮下方
+        pendingFeedback = str;
         startStatusBreathing(activity, false);
-        if (feedbackView != null && dialog != null && dialog.isShowing()) {
-            feedbackView.setText(str);
-            feedbackView.setTextColor(Color.parseColor("#B33A3A"));
-            feedbackView.setBackground(createRoundRectDrawable(Color.parseColor("#FDE8E8"), dp(activity, 10.0f)));
-            feedbackView.setVisibility(0);
+        applyPendingFeedback();
+    }
+
+    /** 把暂存的提示填到「立即验证」按钮下方的空白处 */
+    private static void applyPendingFeedback() {
+        if (pendingFeedback == null || feedbackView == null || dialog == null || !dialog.isShowing()) {
             return;
         }
-        Toast.makeText(activity, str, 0).show();
+        feedbackView.setText(pendingFeedback);
+        feedbackView.setTextColor(Color.parseColor("#B33A3A"));
+        feedbackView.setBackground(createRoundRectDrawable(Color.parseColor("#FDE8E8"), 10.0f));
+        feedbackView.setVisibility(0);
+        pendingFeedback = null;
     }
 
     public static void showValidationSuccess(Activity activity) {
+        pendingFeedback = null;
         startStatusBreathing(activity, true);
         hideValidationFeedback();
     }
