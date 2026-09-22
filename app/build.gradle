@@ -1,0 +1,162 @@
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import java.security.MessageDigest
+import java.security.SecureRandom
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.myapplication'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.myapplication"
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            shrinkResources true
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
+
+// ═══════════════════════════════════════════════════
+// 编译时源码字符串加密
+// ═══════════════════════════════════════════════════
+
+// 与 Cryptor.java 中相同的密钥派生
+String aesEncrypt(String plaintext) {
+    String p1 = "X7k9#mP2"
+    String p2 = "qR4\$vN8*"
+    String p3 = "wL1@zB6!"
+    byte[] seed = (p1 + p2 + p3).getBytes("UTF-8")
+    byte[] keyBytes = MessageDigest.getInstance("SHA-256").digest(seed)
+    def key = new SecretKeySpec(keyBytes, "AES")
+
+    byte[] iv = new byte[12]
+    SecureRandom.getInstanceStrong().nextBytes(iv)
+
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv))
+    byte[] ciphertext = cipher.doFinal(plaintext.getBytes("UTF-8"))
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream()
+    bos.write(iv)
+    bos.write(ciphertext)
+    return java.util.Base64.getEncoder().encodeToString(bos.toByteArray())
+}
+
+// 判断字符串是否需要加密
+boolean shouldEncrypt(String s) {
+    if (s == "联系QQ：2502660988" || s == "https://ok1666.cn") return false
+    if (s.startsWith("http://") || s.startsWith("https://")) return true
+    for (int i = 0; i < s.length(); i++) {
+        char c = s.charAt(i)
+        if (c >= '一' && c <= '鿿') return true
+    }
+    return false
+}
+
+// 解析 Java 源码中的字符串字面量并替换
+String transformJavaSource(String source) {
+    def result = new StringBuilder()
+    def i = 0
+
+    while (i < source.length()) {
+        if (source[i] == '"') {
+            def start = i
+            i++ // skip opening quote
+            while (i < source.length() && source[i] != '"') {
+                if (source[i] == '\\' && i + 1 < source.length()) i++ // skip escaped char
+                i++
+            }
+            if (i < source.length()) {
+                i++ // skip closing quote
+                def raw = source.substring(start, i)           // "..." with quotes
+                def content = source.substring(start + 1, i - 1) // content without quotes
+
+                if (shouldEncrypt(content)) {
+                    String enc = aesEncrypt(content)
+                    result << "com.example.myapplication.crypt.Cryptor.decrypt(\"${enc}\")"
+                } else {
+                    result << raw
+                }
+            } else {
+                result << source.substring(start)
+            }
+        } else {
+            result << source[i]
+            i++
+        }
+    }
+
+    return result.toString()
+}
+
+// 输出目录
+def encryptedSrcDir = file("${buildDir}/generated/encrypted-src/main/java")
+def originalSrcDir = file("src/main/java")
+
+// 注册为编译源码目录（排他，仅用加密后的副本编译）
+android.sourceSets.main.java.srcDirs = [encryptedSrcDir]
+
+// 生成加密源码的任务
+task generateEncryptedSources {
+    description = "复制源码、加密 URL 和中文字符串，输出到 build 目录"
+    inputs.dir(originalSrcDir)
+    outputs.dir(encryptedSrcDir)
+
+    doLast {
+        delete encryptedSrcDir
+        int fileCount = 0, strCount = 0
+
+        fileTree(dir: originalSrcDir, include: "**/*.java", exclude: "**/R.java").each { srcFile ->
+            def relativePath = srcFile.absolutePath.substring(originalSrcDir.absolutePath.length() + 1)
+            def outFile = new File(encryptedSrcDir, relativePath)
+            outFile.parentFile.mkdirs()
+
+            def original = srcFile.text
+            def transformed = transformJavaSource(original)
+
+            // 统计改了多少字符串
+            def originalStrs = (original =~ /"([^"\\]*(\\.[^"\\]*)*)"/)
+            def newStrs = (transformed =~ /Cryptor\.decrypt\(/)
+            int changed = newStrs.size()
+
+            outFile.text = transformed
+            fileCount++
+            strCount += changed
+        }
+
+        println "✓ 已加密 ${strCount} 个字符串（${fileCount} 个文件）→ ${encryptedSrcDir}"
+    }
+}
+
+// Java 编译依赖于加密生成
+tasks.matching { it.name.contains("JavaWithJavac") || it.name.contains("JavaCompile") }.configureEach {
+    dependsOn generateEncryptedSources
+}
