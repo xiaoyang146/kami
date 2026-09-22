@@ -25,7 +25,7 @@ public class HttpUtil {
     }
 
     public static void postFormData(final String urlString, final String formData, final ResponseCallback responseCallback, final ErrorCallback errorCallback) {
-        new Thread(new Runnable() { // from class: com.example.myapplication.HttpUtil$$ExternalSyntheticLambda0
+        new Thread(new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 HttpUtil.lambda$postFormData$3(urlString, formData, responseCallback, errorCallback);
@@ -65,7 +65,7 @@ public class HttpUtil {
                     is.close();
                     final String responseStr = response.toString();
                     Log.d(TAG, "Response: " + responseStr);
-                    handler.post(new Runnable() { // from class: com.example.myapplication.HttpUtil$$ExternalSyntheticLambda1
+                    handler.post(new Runnable() {
                         @Override // java.lang.Runnable
                         public final void run() {
                             responseCallback.onResponse(responseStr);
@@ -74,7 +74,7 @@ public class HttpUtil {
                 } else {
                     final String errorMsg = "HTTP error: " + responseCode;
                     Log.e(TAG, errorMsg);
-                    handler.post(new Runnable() { // from class: com.example.myapplication.HttpUtil$$ExternalSyntheticLambda2
+                    handler.post(new Runnable() {
                         @Override // java.lang.Runnable
                         public final void run() {
                             errorCallback.onError(errorMsg);
@@ -87,7 +87,7 @@ public class HttpUtil {
         } catch (Exception e) {
             Log.e(TAG, "Exception in postFormData: " + e.getMessage());
             e.printStackTrace();
-            handler.post(new Runnable() { // from class: com.example.myapplication.HttpUtil$$ExternalSyntheticLambda3
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     errorCallback.onError(e.getMessage());

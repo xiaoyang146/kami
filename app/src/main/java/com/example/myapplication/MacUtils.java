@@ -13,7 +13,7 @@ public class MacUtils {
             Toast.makeText(activity, "请打开网络连接", Toast.LENGTH_LONG).show();
             Handler handler = new Handler();
             Objects.requireNonNull(activity);
-            handler.postDelayed(new Runnable() { // from class: com.example.myapplication.MacUtils$$ExternalSyntheticLambda0
+            handler.postDelayed(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     activity.finish();

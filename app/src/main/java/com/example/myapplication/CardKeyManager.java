@@ -32,7 +32,7 @@ public class CardKeyManager {
     public static void validateKami(final Activity activity, String kamiCode, String deviceId, final boolean autoLogin) {
         Log.d(TAG, "验证卡密: " + kamiCode + ", 设备ID: " + deviceId);
         if (kamiCode == null || kamiCode.trim().isEmpty()) {
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda0
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$validateKami$0(activity, autoLogin);
@@ -41,7 +41,7 @@ public class CardKeyManager {
             return;
         }
         if (deviceId == null || deviceId.trim().isEmpty()) {
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda1
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$validateKami$1(activity, autoLogin);
@@ -86,7 +86,7 @@ public class CardKeyManager {
             Handler handler = CardKeyManager.handler;
             final Activity activity = this.val$activity;
             final boolean z = this.val$autoLogin;
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$1$$ExternalSyntheticLambda1
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.AnonymousClass1.lambda$onFailure$0(activity, e, z);
@@ -109,7 +109,7 @@ public class CardKeyManager {
                 Handler handler = CardKeyManager.handler;
                 final Activity activity = this.val$activity;
                 final boolean z = this.val$autoLogin;
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$1$$ExternalSyntheticLambda0
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.AnonymousClass1.lambda$onResponse$1(activity, response, z);
@@ -128,14 +128,13 @@ public class CardKeyManager {
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void handleResponse(final Activity activity, String response, String kamiCode, final boolean autoLogin) {
         try {
             JSONObject json = new JSONObject(response);
             boolean success = json.optBoolean("success");
             final String message = json.optString("message");
             if (!success) {
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda3
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.lambda$handleResponse$2(activity, message, autoLogin);
@@ -149,7 +148,7 @@ public class CardKeyManager {
                 final String expireTime = data.optString("expire_time", HttpUrl.FRAGMENT_ENCODE_SET);
                 int appIdInt = data.optInt("app_id", 1);
                 final String appIdStr = String.valueOf(appIdInt);
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda5
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.lambda$handleResponse$5(expireTime, activity, appIdStr);
@@ -157,7 +156,7 @@ public class CardKeyManager {
                 });
                 return;
             }
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda4
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$handleResponse$3(message, activity, autoLogin);
@@ -165,7 +164,7 @@ public class CardKeyManager {
             });
         } catch (Exception e) {
             Log.e(TAG, "解析响应失败", e);
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda6
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$handleResponse$6(activity, autoLogin);
@@ -206,7 +205,7 @@ public class CardKeyManager {
         }
         Toast.makeText(activity, toastMsg, Toast.LENGTH_LONG).show();
         startPeriodicValidationCheck(activity);
-        NoticeManager.fetchNoticesWithAppId(activity, appIdStr, new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda2
+        NoticeManager.fetchNoticesWithAppId(activity, appIdStr, new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 CardKeyManager.lambda$handleResponse$4();
@@ -224,10 +223,9 @@ public class CardKeyManager {
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void showInputDialog(final Activity activity) {
         stopPeriodicValidationCheck();
-        handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda7
+        handler.post(new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 DialogUtils.showValidationDialog(activity);
@@ -269,7 +267,7 @@ public class CardKeyManager {
         }
     }
 
-    private static void checkKamiPeriodically(final Activity activity, String kamiCode, String deviceId) {
+    public static void checkKamiPeriodically(final Activity activity, String kamiCode, String deviceId) {
         FormBody formBody = new FormBody.Builder()
                 .add("kami_code", kamiCode)
                 .add("device_id", deviceId)
@@ -306,7 +304,7 @@ public class CardKeyManager {
         });
     }
 
-    private static void handleInvalidKey(final Activity activity, final String message) {
+    public static void handleInvalidKey(final Activity activity, final String message) {
         stopPeriodicValidationCheck();
         handler.post(new Runnable() {
             @Override

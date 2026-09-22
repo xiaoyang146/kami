@@ -16,7 +16,7 @@ public class NoticeManager {
     private static final Handler handler = new Handler(Looper.getMainLooper());
 
     public static void fetchNotices(final Activity activity, final Runnable onComplete) {
-        new Thread(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda5
+        new Thread(new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 NoticeManager.lambda$fetchNotices$2(activity, onComplete);
@@ -51,7 +51,7 @@ public class NoticeManager {
                     JSONObject json = new JSONObject(sb.toString());
                     if (json.optBoolean("success") && (data = json.optJSONObject("data")) != null) {
                         final Notice notice = new Notice(data.optString("title", "公告"), data.optString("content", HttpUrl.FRAGMENT_ENCODE_SET));
-                        handler.post(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda2
+                        handler.post(new Runnable() {
                             @Override // java.lang.Runnable
                             public final void run() {
                                 DialogUtils.showNoticeDialog(activity, notice, onComplete);
@@ -70,7 +70,7 @@ public class NoticeManager {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                handler.post(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda3
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         NoticeManager.lambda$fetchNotices$1(activity, onComplete);
@@ -95,7 +95,7 @@ public class NoticeManager {
     }
 
     public static void fetchNoticesWithAppId(final Activity activity, final String appId, final Runnable onComplete) {
-        new Thread(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda4
+        new Thread(new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 NoticeManager.lambda$fetchNoticesWithAppId$5(appId, activity, onComplete);
@@ -130,7 +130,7 @@ public class NoticeManager {
                     JSONObject json = new JSONObject(sb.toString());
                     if (json.optBoolean("success") && (data = json.optJSONObject("data")) != null) {
                         final Notice notice = new Notice(data.optString("title", "公告"), data.optString("content", HttpUrl.FRAGMENT_ENCODE_SET));
-                        handler.post(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda0
+                        handler.post(new Runnable() {
                             @Override // java.lang.Runnable
                             public final void run() {
                                 DialogUtils.showNoticeDialog(activity, notice, onComplete);
@@ -149,7 +149,7 @@ public class NoticeManager {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                handler.post(new Runnable() { // from class: com.example.myapplication.NoticeManager$$ExternalSyntheticLambda1
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         NoticeManager.lambda$fetchNoticesWithAppId$4(activity, onComplete);
