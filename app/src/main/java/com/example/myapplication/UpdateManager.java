@@ -43,8 +43,8 @@ import java.net.URL;
  * 显示规则：
  * <ol>
  *   <li>"开启插件更新" 为假 → 不弹；</li>
- *   <li>服务端给了 version_code 时，只有 version_code &gt; 本机 versionCode 才弹；</li>
- *   <li>非强制更新且该版本已被用户点过「稍后再说」→ 不再弹。</li>
+ *   <li>服务端未给 version_code（或为 0）→ 每次启动都弹；</li>
+ *   <li>服务端 version_code &gt; 本机宿主 versionCode → 弹；否则说明用户已更新过，不弹。</li>
  * </ol>
  */
 public class UpdateManager {
@@ -193,11 +193,25 @@ public class UpdateManager {
 
     /**
      * 是否显示更新弹窗。
-     * <p>按产品需求：只要管理端「开启更新插件」为真（即本方法被调用时 data 已通过 {@link #isEnabled}），
-     * 就每次都要弹，不再比对版本号、也不受「稍后再说」影响。</p>
+     * <p>规则：</p>
+     * <ol>
+     *   <li>管理端未填「新版本号」（version_code &lt;= 0）→ 保持老行为，开启插件更新就每次都弹；</li>
+     *   <li>服务端 version_code &gt; 本机 versionCode → 提示更新；</li>
+     *   <li>服务端 version_code &lt;= 本机 versionCode → 用户手里已经是最新版，不再提示。</li>
+     * </ol>
+     * <p>注意：本机 versionCode 取自宿主 App 的 PackageManager，
+     * 即「更新链接」那个 APK 安装后的版本号；用户装上新版后 versionCode 变大，弹窗自动消失。</p>
      */
     private static boolean shouldShow(Context context, UpdateInfo info, int localVersionCode) {
-        return true;
+        if (info == null) {
+            return false;
+        }
+        // 管理端没填新版本号：无法判断，沿用「开启即每次弹」
+        if (info.versionCode <= 0) {
+            return true;
+        }
+        // 只有服务端版本号更大时才提示，已更新过就不打扰
+        return info.versionCode > localVersionCode;
     }
 
     /** 用户点「稍后再说」时记录忽略的版本（仅对带 version_code 的更新生效） */
