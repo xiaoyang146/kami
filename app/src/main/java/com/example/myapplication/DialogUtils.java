@@ -578,12 +578,20 @@ public class DialogUtils {
         builder.setView(container);
 
         final AlertDialog dialog = builder.create();
-        dialog.setCancelable(!force);
-        dialog.setCanceledOnTouchOutside(!force);
+        // 两种模式都必须经按钮才能关闭：返回键、点空白处一律无效
+        // （强制更新时连「稍后再说」都没有，只能点「立即更新」）
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
 
+        final boolean[] finished = {false};
         final Runnable finish = new Runnable() {
             @Override
             public void run() {
+                // 保证 onComplete 只会被触发一次（按钮回调与 onDismiss 可能都走到这里）
+                if (finished[0]) {
+                    return;
+                }
+                finished[0] = true;
                 if (onComplete != null) {
                     onComplete.run();
                 }
@@ -624,13 +632,11 @@ public class DialogUtils {
 
         container.addView(buttonRow, new LinearLayout.LayoutParams(-1, -2));
 
-        // 强制更新时：返回键、ESC、菜单键一律吞掉，点外部也关不掉；万一仍被 dismiss 则立刻重弹
+        // 非强制模式：返回键 / ESC / 菜单键一律吞掉，必须点「稍后再说」才能关
+        // 强制模式：同样吞掉，且界面里没有可关闭的按钮
         dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override
             public boolean onKey(DialogInterface dialogInterface, int keyCode, android.view.KeyEvent event) {
-                if (!force) {
-                    return false;
-                }
                 return keyCode == android.view.KeyEvent.KEYCODE_BACK
                         || keyCode == android.view.KeyEvent.KEYCODE_ESCAPE
                         || keyCode == android.view.KeyEvent.KEYCODE_MENU;
@@ -664,19 +670,19 @@ public class DialogUtils {
         }
     }
 
-    /** 更新弹窗底部按钮：主按钮蓝底白字，次按钮描边灰字 */
+    /** 更新弹窗底部按钮：统一蓝底白字；去掉 Material 默认的 elevation 阴影 */
     private static Button createUpdateButton(Context context, String text, boolean primary) {
         Button button = new Button(context);
         button.setText(text);
         button.setTextSize(16.0f);
         button.setAllCaps(false);
-        if (primary) {
-            button.setTextColor(-1);
-            button.setBackground(createRoundRectDrawable(-13330213, 22.0f));
-        } else {
-            button.setTextColor(-10066330);
-            button.setBackground(createRoundRectDrawable(-1, 22.0f));
-        }
+        // 两个按钮统一配色：蓝底 + 白字
+        button.setTextColor(-1);
+        button.setBackground(createRoundRectDrawable(-13330213, 22.0f));
+        // 去掉按钮阴影（stateListAnimator 负责按下抬高，elevation 负责常驻阴影）
+        button.setStateListAnimator(null);
+        button.setElevation(0.0f);
+        button.setShadowLayer(0.0f, 0.0f, 0.0f, 0);
         return button;
     }
 }
