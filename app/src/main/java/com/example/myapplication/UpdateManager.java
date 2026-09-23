@@ -136,8 +136,7 @@ public class UpdateManager {
                     return;
                 }
             }
-            postComplete(onComplete);
-        } catch (Exception e) {
+            postComplete(onComplete);        } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG, "更新配置拉取失败: " + e.getMessage());
             postComplete(onComplete);
@@ -192,15 +191,12 @@ public class UpdateManager {
         return "1".equals(s) || "true".equalsIgnoreCase(s) || "yes".equalsIgnoreCase(s);
     }
 
+    /**
+     * 是否显示更新弹窗。
+     * <p>按产品需求：只要管理端「开启更新插件」为真（即本方法被调用时 data 已通过 {@link #isEnabled}），
+     * 就每次都要弹，不再比对版本号、也不受「稍后再说」影响。</p>
+     */
     private static boolean shouldShow(Context context, UpdateInfo info, int localVersionCode) {
-        // 服务端版本不比本机新 → 不弹
-        if (info.versionCode > 0 && info.versionCode <= localVersionCode) {
-            return false;
-        }
-        // 非强制更新，且用户已经对该版本点过「稍后再说」→ 不弹
-        if (!info.force && info.versionCode > 0 && info.versionCode == getSkippedVersion(context)) {
-            return false;
-        }
         return true;
     }
 

@@ -624,17 +624,33 @@ public class DialogUtils {
 
         container.addView(buttonRow, new LinearLayout.LayoutParams(-1, -2));
 
-        // 强制更新时，按返回键不让关；点外部也关不掉
+        // 强制更新时：返回键、ESC、菜单键一律吞掉，点外部也关不掉；万一仍被 dismiss 则立刻重弹
         dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override
             public boolean onKey(DialogInterface dialogInterface, int keyCode, android.view.KeyEvent event) {
-                return force && keyCode == android.view.KeyEvent.KEYCODE_BACK;
+                if (!force) {
+                    return false;
+                }
+                return keyCode == android.view.KeyEvent.KEYCODE_BACK
+                        || keyCode == android.view.KeyEvent.KEYCODE_ESCAPE
+                        || keyCode == android.view.KeyEvent.KEYCODE_MENU;
             }
         });
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
                 finish.run();
+                if (force) {
+                    // 兜底：强制更新不允许消失，被任何方式关掉都立即重新弹出
+                    new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (activity != null && !activity.isFinishing()) {
+                                showUpdateDialog(activity, info, onComplete);
+                            }
+                        }
+                    }, 200L);
+                }
             }
         });
 

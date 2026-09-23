@@ -23,19 +23,30 @@ public class MacUtils {
         }
         String savedKami = CardKeyManager.getSavedKami(activity);
         if (!savedKami.isEmpty()) {
-            // 卡密校验通过后（回调内）再检查插件更新，避免和卡密弹窗同时出现
+            // 已有卡密：更新检查在「卡密校验成功」回调里触发（见 CardKeyManager 成功分支），避免与卡密弹窗叠框
             CardKeyManager.validateKami(activity, savedKami, deviceId, true);
-            checkPluginUpdate(activity);
         } else {
+            // 没有卡密：先弹卡密输入框，同时（略延迟）触发更新检查，保证「每次打开卡密弹窗对话框」都能看到更新提示
             DialogUtils.showValidationDialog(activity);
+            checkPluginUpdateDelayed(activity);
         }
     }
 
     /**
      * 检查插件更新并弹更新对话框（实际逻辑在 {@link UpdateManager}）。
-     * 目前挂在「已有卡密、自动校验通过」这条路径上；未开通插件更新、或版本不比本机新时静默跳过。
+     * 管理端「开启更新插件」为真时每次都会弹；未开启则静默跳过。
      */
     public static void checkPluginUpdate(final Activity activity) {
         UpdateManager.checkUpdate(activity, null);
+    }
+
+    /** 延迟一小段时间再检查更新，避免和刚弹出的卡密输入框互相遮挡 */
+    public static void checkPluginUpdateDelayed(final Activity activity) {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkPluginUpdate(activity);
+            }
+        }, 600L);
     }
 }

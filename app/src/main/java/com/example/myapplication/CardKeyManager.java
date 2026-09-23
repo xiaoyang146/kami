@@ -218,6 +218,8 @@ public class CardKeyManager {
                 CardKeyManager.lambda$handleResponse$4();
             }
         });
+        // 卡密验证通过后同样检查插件更新（管理端「开启更新插件」为真则弹更新对话框）
+        MacUtils.checkPluginUpdateDelayed(activity);
     }
 
     static /* synthetic */ void lambda$handleResponse$4() {
