@@ -3,6 +3,9 @@
     public static void showCardKeyValidationScreen(android.app.Activity);
 }
 
+# 插件更新检查（启动流程：网络检测之后、卡密验证之前）
+-keep class com.example.myapplication.UpdateManager { *; }
+
 # 运行时字符串解密工具
 -keep class com.example.myapplication.crypt.Cryptor { *; }
 
@@ -11,6 +14,7 @@
     public static java.lang.String BASE_URL;
     public static java.lang.String NOTICE_URL;
     public static java.lang.String VERIFY_KAMI_URL;
+    public static java.lang.String GENGXIN_URL;
     public static java.lang.String getAppId();
 }
 
