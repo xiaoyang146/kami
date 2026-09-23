@@ -201,6 +201,9 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$handleResponse$5(String expireTime, Activity activity, String appIdStr) {
+        // 把服务端返回的 app_id 落到 AppConstants，
+        // 使「公告」「插件更新」都按同一个应用维度拉取配置（此前 APP_ID 恒为硬编码的 1）
+        AppConstants.setAppId(appIdStr);
         if (DialogUtils.dialog != null && DialogUtils.dialog.isShowing()) {
             DialogUtils.dialog.dismiss();
         }
