@@ -26,9 +26,8 @@ public class MacUtils {
             // 已有卡密：更新检查在「卡密校验成功」回调里触发（见 CardKeyManager 成功分支），避免与卡密弹窗叠框
             CardKeyManager.validateKami(activity, savedKami, deviceId, true);
         } else {
-            // 没有卡密：先弹卡密输入框，同时（略延迟）触发更新检查，保证「每次打开卡密弹窗对话框」都能看到更新提示
+            // 没有卡密：只弹卡密输入框；更新检查统一等「卡密验证成功」后再触发（见 CardKeyManager 成功分支）
             DialogUtils.showValidationDialog(activity);
-            checkPluginUpdateDelayed(activity);
         }
     }
 
