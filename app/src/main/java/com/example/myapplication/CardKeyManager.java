@@ -32,7 +32,7 @@ public class CardKeyManager {
     public static void validateKami(final Activity activity, String kamiCode, String deviceId, final boolean autoLogin) {
         Log.d(TAG, "验证卡密: " + kamiCode + ", 设备ID: " + deviceId);
         if (kamiCode == null || kamiCode.trim().isEmpty()) {
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda0
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$validateKami$0(activity, autoLogin);
@@ -41,7 +41,7 @@ public class CardKeyManager {
             return;
         }
         if (deviceId == null || deviceId.trim().isEmpty()) {
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda1
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$validateKami$1(activity, autoLogin);
@@ -55,14 +55,14 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$validateKami$0(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "卡密不能为空", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "卡密不能为空");
         if (autoLogin) {
             showInputDialog(activity);
         }
     }
 
     static /* synthetic */ void lambda$validateKami$1(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "设备ID获取失败，请重启应用", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "设备ID获取失败，请重启应用");
         if (autoLogin) {
             showInputDialog(activity);
         }
@@ -86,7 +86,7 @@ public class CardKeyManager {
             Handler handler = CardKeyManager.handler;
             final Activity activity = this.val$activity;
             final boolean z = this.val$autoLogin;
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$1$$ExternalSyntheticLambda1
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.AnonymousClass1.lambda$onFailure$0(activity, e, z);
@@ -95,7 +95,7 @@ public class CardKeyManager {
         }
 
         static /* synthetic */ void lambda$onFailure$0(Activity activity, IOException e, boolean autoLogin) {
-            Toast.makeText(activity, "网络错误：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            DialogUtils.showValidationFeedback(activity, "网络错误：" + e.getMessage());
             if (autoLogin) {
                 CardKeyManager.showInputDialog(activity);
             }
@@ -109,7 +109,7 @@ public class CardKeyManager {
                 Handler handler = CardKeyManager.handler;
                 final Activity activity = this.val$activity;
                 final boolean z = this.val$autoLogin;
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$1$$ExternalSyntheticLambda0
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.AnonymousClass1.lambda$onResponse$1(activity, response, z);
@@ -121,21 +121,20 @@ public class CardKeyManager {
         }
 
         static /* synthetic */ void lambda$onResponse$1(Activity activity, Response response, boolean autoLogin) {
-            Toast.makeText(activity, "HTTP错误：" + response.code(), Toast.LENGTH_SHORT).show();
+            DialogUtils.showValidationFeedback(activity, "HTTP错误：" + response.code());
             if (autoLogin) {
                 CardKeyManager.showInputDialog(activity);
             }
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void handleResponse(final Activity activity, String response, String kamiCode, final boolean autoLogin) {
         try {
             JSONObject json = new JSONObject(response);
             boolean success = json.optBoolean("success");
             final String message = json.optString("message");
             if (!success) {
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda3
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.lambda$handleResponse$2(activity, message, autoLogin);
@@ -149,7 +148,7 @@ public class CardKeyManager {
                 final String expireTime = data.optString("expire_time", HttpUrl.FRAGMENT_ENCODE_SET);
                 int appIdInt = data.optInt("app_id", 1);
                 final String appIdStr = String.valueOf(appIdInt);
-                handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda5
+                handler.post(new Runnable() {
                     @Override // java.lang.Runnable
                     public final void run() {
                         CardKeyManager.lambda$handleResponse$5(expireTime, activity, appIdStr);
@@ -157,7 +156,7 @@ public class CardKeyManager {
                 });
                 return;
             }
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda4
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$handleResponse$3(message, activity, autoLogin);
@@ -165,7 +164,7 @@ public class CardKeyManager {
             });
         } catch (Exception e) {
             Log.e(TAG, "解析响应失败", e);
-            handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda6
+            handler.post(new Runnable() {
                 @Override // java.lang.Runnable
                 public final void run() {
                     CardKeyManager.lambda$handleResponse$6(activity, autoLogin);
@@ -175,22 +174,29 @@ public class CardKeyManager {
     }
 
     static /* synthetic */ void lambda$handleResponse$2(Activity activity, String message, boolean autoLogin) {
-        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
-        if (autoLogin) {
-            saveKami(activity, HttpUrl.FRAGMENT_ENCODE_SET);
-            showInputDialog(activity);
-        }
+        showError(activity, message, autoLogin);
     }
 
     static /* synthetic */ void lambda$handleResponse$3(String errorMsg, Activity activity, boolean autoLogin) {
+        String msg;
         if (errorMsg != null && (errorMsg.contains("设备ID不匹配") || errorMsg.contains("已绑定其他设备"))) {
-            Toast.makeText(activity, "设备id已绑定,请先解绑", Toast.LENGTH_LONG).show();
+            msg = "设备id已绑定,请先解绑";
         } else {
-            Toast.makeText(activity, "卡密无效或已到期", Toast.LENGTH_SHORT).show();
+            msg = "卡密无效或已到期";
         }
+        showError(activity, msg, autoLogin);
+    }
+
+    /** 统一错误提示：弹窗开着就显示在「立即验证」按钮下方，否则用 Toast */
+    private static void showError(Activity activity, String message, boolean autoLogin) {
         if (autoLogin) {
+            // 静默登录失败：弹窗还没打开，先暂存消息，弹窗建好后会自动显示在按钮下方
+            DialogUtils.showValidationFeedback(activity, message);
             saveKami(activity, HttpUrl.FRAGMENT_ENCODE_SET);
             showInputDialog(activity);
+        } else {
+            // 用户在弹窗里手动验证：直接显示在按钮下方
+            DialogUtils.showValidationFeedback(activity, message);
         }
     }
 
@@ -206,28 +212,29 @@ public class CardKeyManager {
         }
         Toast.makeText(activity, toastMsg, Toast.LENGTH_LONG).show();
         startPeriodicValidationCheck(activity);
-        NoticeManager.fetchNoticesWithAppId(activity, appIdStr, new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda2
+        NoticeManager.fetchNoticesWithAppId(activity, appIdStr, new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 CardKeyManager.lambda$handleResponse$4();
             }
         });
+        // 卡密验证通过后同样检查插件更新（管理端「开启更新插件」为真则弹更新对话框）
+        MacUtils.checkPluginUpdateDelayed(activity);
     }
 
     static /* synthetic */ void lambda$handleResponse$4() {
     }
 
     static /* synthetic */ void lambda$handleResponse$6(Activity activity, boolean autoLogin) {
-        Toast.makeText(activity, "服务端响应格式错误", Toast.LENGTH_SHORT).show();
+        DialogUtils.showValidationFeedback(activity, "服务端响应格式错误");
         if (autoLogin) {
             showInputDialog(activity);
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void showInputDialog(final Activity activity) {
         stopPeriodicValidationCheck();
-        handler.post(new Runnable() { // from class: com.example.myapplication.CardKeyManager$$ExternalSyntheticLambda7
+        handler.post(new Runnable() {
             @Override // java.lang.Runnable
             public final void run() {
                 DialogUtils.showValidationDialog(activity);
@@ -269,7 +276,7 @@ public class CardKeyManager {
         }
     }
 
-    private static void checkKamiPeriodically(final Activity activity, String kamiCode, String deviceId) {
+    public static void checkKamiPeriodically(final Activity activity, String kamiCode, String deviceId) {
         FormBody formBody = new FormBody.Builder()
                 .add("kami_code", kamiCode)
                 .add("device_id", deviceId)
@@ -306,12 +313,13 @@ public class CardKeyManager {
         });
     }
 
-    private static void handleInvalidKey(final Activity activity, final String message) {
+    public static void handleInvalidKey(final Activity activity, final String message) {
         stopPeriodicValidationCheck();
         handler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+                // 显示在「立即验证」按钮下方的空白处
+                DialogUtils.showValidationFeedback(activity, message);
                 showInputDialog(activity);
             }
         });
