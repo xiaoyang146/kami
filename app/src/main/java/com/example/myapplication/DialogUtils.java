@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,10 +16,12 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
@@ -498,5 +501,166 @@ public class DialogUtils {
         } catch (ClassNotFoundException e) {
             return false;
         }
+    }
+
+    // ==================== 插件更新弹窗 ====================
+
+    /**
+     * 显示插件更新弹窗。视觉风格复刻公告弹窗：白色圆角卡片 + 居中加粗标题 + 可滚动内容 + 底部按钮。
+     *
+     * @param info       来自 {@link UpdateManager.UpdateInfo} 的更新配置
+     * @param onComplete 弹窗关闭后回调（可为 null）；「稍后再说」会同时记下忽略版本
+     */
+    public static void showUpdateDialog(final Activity activity, final UpdateManager.UpdateInfo info, final Runnable onComplete) {
+        if (activity == null || activity.isFinishing()) {
+            if (onComplete != null) {
+                onComplete.run();
+            }
+            return;
+        }
+        final boolean force = info.force;
+
+        LinearLayout container = new LinearLayout(activity);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dp(activity, 25.0f), dp(activity, 20.0f), dp(activity, 25.0f), dp(activity, 15.0f));
+        container.setBackground(createRoundRectDrawable(-1, 20.0f));
+
+        // 标题（居中加粗，颜色同公告弹窗）
+        TextView titleView = new TextView(activity);
+        titleView.setText(TextUtils.isEmpty(info.title) ? "发现新版本" : info.title);
+        titleView.setTextSize(20.0f);
+        titleView.setTypeface(null, 1);
+        titleView.setTextColor(-13877680);
+        titleView.setGravity(17);
+        titleView.setPadding(0, 0, 0, dp(activity, 10.0f));
+        container.addView(titleView);
+
+        // 版本号（服务端给了才显示）
+        if (!TextUtils.isEmpty(info.versionName)) {
+            TextView versionView = new TextView(activity);
+            versionView.setText("新版本 v" + info.versionName);
+            versionView.setTextSize(13.0f);
+            versionView.setTextColor(-8355712);
+            versionView.setGravity(17);
+            versionView.setPadding(0, 0, 0, dp(activity, 8.0f));
+            container.addView(versionView);
+        }
+
+        // 更新内容（可滚动）
+        TextView contentView = new TextView(activity);
+        contentView.setText(TextUtils.isEmpty(info.content) ? "本次更新包含若干优化，请及时更新。" : info.content);
+        contentView.setTextSize(16.0f);
+        contentView.setTextColor(-13350562);
+        contentView.setPadding(dp(activity, 10.0f), dp(activity, 10.0f), dp(activity, 10.0f), dp(activity, 15.0f));
+        contentView.setGravity(17);
+        ScrollView scrollView = new ScrollView(activity);
+        scrollView.addView(contentView);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, 0, 1.0f);
+        scrollParams.setMargins(0, dp(activity, 5.0f), 0, dp(activity, 10.0f));
+        container.addView(scrollView, scrollParams);
+
+        // 强制更新提示
+        if (force) {
+            TextView forceView = new TextView(activity);
+            forceView.setText("本次为强制更新，需更新后才能继续使用");
+            forceView.setTextSize(13.0f);
+            forceView.setTextColor(-18944);
+            forceView.setGravity(17);
+            forceView.setPadding(0, 0, 0, dp(activity, 8.0f));
+            container.addView(forceView);
+        }
+
+        // 按钮区：水平排列，「立即更新」满宽；非强制时左侧多一个「稍后再说」
+        LinearLayout buttonRow = new LinearLayout(activity);
+        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setView(container);
+
+        final AlertDialog dialog = builder.create();
+        dialog.setCancelable(!force);
+        dialog.setCanceledOnTouchOutside(!force);
+
+        final Runnable finish = new Runnable() {
+            @Override
+            public void run() {
+                if (onComplete != null) {
+                    onComplete.run();
+                }
+            }
+        };
+
+        if (!force) {
+            Button laterButton = createUpdateButton(activity, "稍后再说", false);
+            LinearLayout.LayoutParams laterParams = new LinearLayout.LayoutParams(0, dp(activity, 44.0f), 1.0f);
+            laterParams.setMargins(0, 0, dp(activity, 5.0f), 0);
+            laterButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UpdateManager.markVersionSkipped(activity, info.versionCode);
+                    dialog.dismiss();
+                    finish.run();
+                }
+            });
+            buttonRow.addView(laterButton, laterParams);
+        }
+
+        Button updateButton = createUpdateButton(activity, "立即更新", true);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UpdateManager.openUpdateUrl(activity, info.url);
+                if (!force) {
+                    dialog.dismiss();
+                    finish.run();
+                }
+                // 强制更新时弹窗保持显示，用户下载安装完成后重新进应用即可
+            }
+        });
+        LinearLayout.LayoutParams updateParams = force
+                ? new LinearLayout.LayoutParams(-1, dp(activity, 44.0f))
+                : new LinearLayout.LayoutParams(0, dp(activity, 44.0f), 1.0f);
+        buttonRow.addView(updateButton, updateParams);
+
+        container.addView(buttonRow, new LinearLayout.LayoutParams(-1, -2));
+
+        // 强制更新时，按返回键不让关；点外部也关不掉
+        dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialogInterface, int keyCode, android.view.KeyEvent event) {
+                return force && keyCode == android.view.KeyEvent.KEYCODE_BACK;
+            }
+        });
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                finish.run();
+            }
+        });
+
+        dialog.show();
+
+        // 圆角卡片 + 左右留边距
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(createRoundRectDrawable(-1, 20.0f));
+            window.setLayout((int) (activity.getResources().getDisplayMetrics().widthPixels * 0.86f), -2);
+        }
+    }
+
+    /** 更新弹窗底部按钮：主按钮蓝底白字，次按钮描边灰字 */
+    private static Button createUpdateButton(Context context, String text, boolean primary) {
+        Button button = new Button(context);
+        button.setText(text);
+        button.setTextSize(16.0f);
+        button.setAllCaps(false);
+        if (primary) {
+            button.setTextColor(-1);
+            button.setBackground(createRoundRectDrawable(-13330213, 22.0f));
+        } else {
+            button.setTextColor(-10066330);
+            button.setBackground(createRoundRectDrawable(-1, 22.0f));
+        }
+        return button;
     }
 }
